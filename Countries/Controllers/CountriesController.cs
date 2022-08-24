@@ -30,14 +30,14 @@ public class CountriesController : ControllerBase
     }
     
     [HttpGet("name/{name}")]
-    public async Task<ActionResult<List<CountryDto>>> GetCountriesByName(string name)
+    public async Task<ActionResult<CountryDto>> GetCountriesByName(string name)
     {
         try
         {
             if (string.IsNullOrWhiteSpace(name))
                 return new BadRequestObjectResult("Please provide country name or symbol");
         
-            return await _restCountriesApi.GetCountriesByName(name);
+            return await _restCountriesApi.GetCountryByName(name);
         }
         catch (Exception e)
         {

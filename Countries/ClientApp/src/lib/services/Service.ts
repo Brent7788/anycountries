@@ -5,11 +5,10 @@ export default class Service {
 
     private static readonly fetch = window.fetch?.bind(window);
     private static readonly url = Store.getByName('devUrl');
-    private static readonly baseNorrisUrl = "https://api.chucknorris.io";
 
-    public static async GetChuckNorrisCategories() {
+    public static async GetAll() {
         try {
-            const response = await this.fetch(`${this.url}/chuck/categories`);
+            const response = await this.fetch(`${this.url}`);
 
             if (!response.ok) {
                 RoutingService.goto(`/error?message=${await response.text()}`);
@@ -23,9 +22,41 @@ export default class Service {
         }
     }
 
-    public static async GetChuckNorrisJokesByCategory(category: string) {
+    public static async GetCountriesByName(name: string) {
         try {
-            const response = await this.fetch(`${this.baseNorrisUrl}/jokes/random?category=${category}`);
+            const response = await this.fetch(`${this.url}/name/${name}`);
+
+            if (!response.ok) {
+                RoutingService.goto(`/error?message=${await response.text()}`);
+                return;
+            }
+
+            return await response.json();
+        } catch (err) {
+            console.error('Error', err);
+            RoutingService.goto("/error?message=Something went wrong!");
+        }
+    }
+
+    public static async GetCountriesByRegion(region: string) {
+        try {
+            const response = await this.fetch(`${this.url}/region/${region}`);
+
+            if (!response.ok) {
+                RoutingService.goto(`/error?message=${await response.text()}`);
+                return;
+            }
+
+            return await response.json();
+        } catch (err) {
+            console.error('Error', err);
+            RoutingService.goto("/error?message=Something went wrong!");
+        }
+    }
+
+    public static async GetCountriesBySubregion(subregion: string) {
+        try {
+            const response = await this.fetch(`${this.url}/subregion/${subregion}`);
 
             if (!response.ok) {
                 RoutingService.goto(`/error?message=${await response.text()}`);

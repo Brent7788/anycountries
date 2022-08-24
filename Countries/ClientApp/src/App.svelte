@@ -3,6 +3,6 @@
 </script>
 
 <div>
-  <h1>Welcome to Any Countries</h1>
+  <h1>Welcome to Country Explore</h1>
   <AppRouting  />
 </div>

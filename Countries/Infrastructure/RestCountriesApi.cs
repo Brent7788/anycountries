@@ -19,10 +19,14 @@ public class RestCountriesApi : IRestCountriesApi
         _client = client;
     }
 
-    //TODO Make more DRY
-    
+    //TODO Use real cash
+    private static readonly List<CountryDto> Cash = new();
+
     public async Task<List<CountryDto>> GetAll()
     {
+        if (Cash.Any())
+            return Cash;
+        
         var responseMessage = await _client.GetAsync("all");
 
         if (!responseMessage.IsSuccessStatusCode)
@@ -31,22 +35,29 @@ public class RestCountriesApi : IRestCountriesApi
         var readAsString= await responseMessage.Content.ReadAsStringAsync();
 
         var countryDtos = JsonSerializer.Deserialize<List<CountryDto>>(readAsString, Options);
+
+        if (countryDtos is null) return EmptyDtos;
         
-        return countryDtos ?? EmptyDtos;
+        foreach (var countryDto in countryDtos)
+        {
+            Cash.Add(countryDto); 
+        }
+
+        return countryDtos;
     }
 
-    public async Task<List<CountryDto>> GetCountriesByName(string name)
+    public async Task<CountryDto> GetCountryByName(string name)
     {
         var responseMessage = await _client.GetAsync($"name/{name}");
 
         if (!responseMessage.IsSuccessStatusCode)
-            return EmptyDtos;
+            return new CountryDto();
 
         var readAsString= await responseMessage.Content.ReadAsStringAsync();
 
         var countryDtos = JsonSerializer.Deserialize<List<CountryDto>>(readAsString, Options);
         
-        return countryDtos ?? EmptyDtos;
+        return countryDtos?.FirstOrDefault() ?? new CountryDto();
     }
 
     public async Task<RegionDto> GetCountriesByRegion(string region)

@@ -24,7 +24,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseCors(corsPolicyBuilder =>
 {
-    corsPolicyBuilder.WithOrigins("https://localhost:44492")
+    corsPolicyBuilder.WithOrigins("https://localhost:44492", "https://localhost:7257")
         .AllowAnyHeader()
         .AllowAnyMethod();
 });

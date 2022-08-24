@@ -1,11 +1,11 @@
 import {writable} from "svelte/store";
 import Condition from "../tools/Condition";
 
-localStorage.setItem("devUrl", "https://localhost:7008");
+localStorage.setItem("devUrl", "https://localhost:7257/api/countries");
 
 export default class Store {
 
-    private static store: any = writable({devUrl: "https://localhost:7008"});
+    private static store: any = writable({devUrl: "https://localhost:7257/api/countries"});
 
     constructor() {
     }

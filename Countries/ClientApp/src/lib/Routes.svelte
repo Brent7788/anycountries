@@ -11,7 +11,6 @@
     let displayComponent: any | undefined;
     let componentParam: any | undefined;
     let is404 = false;
-    let count = 0;
 
     beforeUpdate(() => {
 
