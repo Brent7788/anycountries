@@ -1,8 +1,17 @@
+using Countries.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllersWithViews();
+
+builder.Services.AddSingleton<IRestCountriesApi, RestCountriesApi>();
+builder.Services.AddHttpClient<IRestCountriesApi, RestCountriesApi>(client =>
+{
+    //TODO Add in the app settings
+    client.BaseAddress = new Uri("https://restcountries.com/v3.1/");
+});
 
 var app = builder.Build();
 
