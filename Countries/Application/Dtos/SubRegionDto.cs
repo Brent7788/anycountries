@@ -1,4 +1,6 @@
-﻿namespace Countries.Application.RestCountriesDtos;
+﻿using Countries.Application.RestCountriesDtos;
+
+namespace Countries.Application.Dtos;
 
 public class SubRegionDto
 {

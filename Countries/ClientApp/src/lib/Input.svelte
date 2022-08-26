@@ -1,6 +1,4 @@
 <script lang="ts">
-    /*import Icon from "svelte-awesome/components/Icon.svelte";
-    import {cloudUpload} from "svelte-awesome/icons";*/
     import {onMount} from "svelte";
 
     export let id = "";
@@ -43,7 +41,7 @@
       background: #ffffff;
       box-sizing: border-box;
       box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
-      border: 1px solid #9a6e6e;
+      border: 1px solid #95A5A6;
       padding: 1px 14px;
       height: 36px;
       width: 50%;

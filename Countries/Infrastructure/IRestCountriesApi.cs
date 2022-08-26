@@ -1,4 +1,5 @@
-﻿using Countries.Application.RestCountriesDtos;
+﻿using Countries.Application.Dtos;
+using Countries.Application.RestCountriesDtos;
 
 namespace Countries.Infrastructure;
 

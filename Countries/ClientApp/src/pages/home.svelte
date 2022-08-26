@@ -1,52 +1,229 @@
 <script lang="ts">
-    import {onMount} from "svelte";
+    import {beforeUpdate, onMount} from "svelte";
 
     //Services
     import RoutingService from "../lib/services/RoutingService.js";
     import Service from "../lib/services/Service";
+    import Input from "../lib/Input.svelte";
 
+    //Tools
+    import Condition from "../lib/tools/Condition";
+    import Button from "../lib/Button.svelte";
+
+    let allResult: Promise<[]>;
     let result: Promise<[]>;
+    let search = "";
+    let oldSearch = "";
+    let searchTimeout;
+    const MAX_RESULT = 5;
 
-    onMount(() => {
-        result = Service.GetAll();
+    onMount(async () => {
+        allResult = Service.GetAll();
+        await copyFirstFiveCountries();
     });
+
+    beforeUpdate(async () => {
+
+        if (search === oldSearch)
+            return;
+
+        if (Condition.isStringEmpty(search)) {
+            search = "";
+            oldSearch = "";
+            await copyFirstFiveCountries();
+            return;
+        }
+
+        if (searchTimeout)
+            clearTimeout(searchTimeout);
+
+        searchTimeout = setTimeout(async () => {
+            let values = await allResult;
+
+            search = search.toLowerCase();
+
+            result = new Promise<[]>((resolve, reject) => {
+                const newResult = values.filter((v: any) =>
+                    Condition.stringContain(v.name?.common.toLowerCase(), search) ||
+                    Condition.stringContain(v.region?.toLowerCase(), search) ||
+                    Condition.stringContain(v.subregion?.toLowerCase(), search));
+                resolve(newResult);
+            });
+
+            oldSearch = search;
+        }, 10);
+    });
+
+    async function copyFirstFiveCountries(): Promise<void> {
+        const values = await allResult;
+        const firstFive = [];
+        for (let i = 0; i < MAX_RESULT; i++) {
+            firstFive[i] = values[i];
+        }
+        result = new Promise<[]>((resolve, reject) => resolve([...firstFive]));
+    }
+
+    let start = 0;
+
+    async function next(): Promise<void> {
+        start += MAX_RESULT;
+        const values = await allResult;
+        const firstFive = [];
+        for (let i = start; i < (start + MAX_RESULT); i++) {
+            firstFive[i - start] = values[i];
+        }
+        result = new Promise<[]>((resolve, reject) => resolve([...firstFive]));
+    }
+
+    async function previse(): Promise<void> {
+        start -= MAX_RESULT;
+        const values = await allResult;
+        const firstFive = [];
+        for (let i = start; i < (start + MAX_RESULT); i++) {
+            firstFive[i - start] = values[i];
+        }
+        result = new Promise<[]>((resolve, reject) => resolve([...firstFive]));
+    }
 </script>
 
+<div class="header">
+    {#if Condition.isStringEmpty(search) && start !== 0}
+        <div on:click={previse}>
+            <Button>Previse</Button>
+        </div>
+    {:else}
+        <div></div>
+    {/if}
+    <Input bind:value={search} label="Search Country"></Input>
+    {#if Condition.isStringEmpty(search)}
+        <div on:click={next}>
+            <Button>Next</Button>
+        </div>
+    {/if}
+</div>
 {#await result}
     <p>Loading ...</p>
 {:then res}
-    {#if res}
-        <table>
-            <tr>
-                <th>Country</th>
-                <th>Region</th>
-                <th>Subregion</th>
-            </tr>
-            {#each res as r}
-                <tr>
-                    <td on:click={() => RoutingService.goto(`/country?name=${r.name.common}`)}>{r.name.common}</td>
-                    <td on:click={() => RoutingService.goto(`/country/region?region=${r.region}`)}>{r.region}</td>
-                    <td on:click={() => RoutingService.goto(`/country/subregion?subregion=${r.subregion}`)}>{r.subregion}</td>
-                </tr>
-            {/each}
-        </table>
+    {#if Condition.isArrayNotEmpty(res)}
+        <div class="container">
+            <ul class="responsive-table">
+                <li class="table-header">
+                    <div class="col col-1">Country</div>
+                    <div class="col col-2">Region</div>
+                    <div class="col col-3">Subregion</div>
+                </li>
+                {#each res as r}
+                    <li class="table-row">
+                        <div class="col col-1" data-label="Country"
+                             on:click={() => RoutingService.goto(`/country?name=${r.name.common}`)}>
+                            {r.name.common}
+                        </div>
+                        <div class="col col-2" data-label="Region"
+                             on:click={() => RoutingService.goto(`/country/region?region=${r.region}`)}>
+                            {r.region}
+                        </div>
+                        <div class="col col-3" data-label="Subregion"
+                             on:click={() => RoutingService.goto(`/country/subregion?subregion=${r.subregion}`)}>
+                            {r.subregion}
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+        </div>
+    {:else}
+        <p>No Results</p>
     {/if}
 {/await}
 
-<!--<table>
-    <tr>
-        <th>Country</th>
-        <th>Region</th>
-        <th>Subregion</th>
-    </tr>
-    <tr>
-        <td>Alfreds Futterkiste</td>
-        <td>Maria Anders</td>
-        <td>Germany</td>
-    </tr>
-    <tr>
-        <td>Centro comercial Moctezuma</td>
-        <td>Francisco Chang</td>
-        <td>Mexico</td>
-    </tr>
-</table>-->
+<style lang="scss">
+
+  .header {
+    display: grid;
+    grid-template-columns: 20% 60% 20%;
+  }
+
+  body {
+    font-family: 'lato', sans-serif;
+  }
+
+  .container {
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .responsive-table {
+    padding: 0;
+
+    li {
+      border-radius: 3px;
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    li:hover {
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.10), 0 5px 5px rgba(0, 0, 0, 0.10);
+    }
+
+    .table-header {
+      background-color: #95A5A6;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .table-row {
+      background-color: #ffffff;
+      box-shadow: 0px 0px 9px 0px rgba(0, 0, 0, 0.1);
+    }
+
+    .col-1 {
+      flex-basis: 25%;
+    }
+
+    .col-2 {
+      flex-basis: 40%;
+    }
+
+    .col-3 {
+      flex-basis: 25%;
+    }
+
+    @media all and (max-width: 767px) {
+      .table-header {
+        display: none;
+      }
+      .table-row {
+
+      }
+      li {
+        display: block;
+      }
+      li:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.10), 0 5px 5px rgba(0, 0, 0, 0.10);
+      }
+      .col {
+
+        flex-basis: 100%;
+
+      }
+      .col {
+        display: flex;
+        padding: 10px 0;
+
+        &:before {
+          color: #6C7A89;
+          padding-right: 10px;
+          content: attr(data-label);
+          flex-basis: 50%;
+          text-align: right;
+        }
+      }
+    }
+  }
+</style>
+
