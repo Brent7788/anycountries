@@ -4,10 +4,13 @@
     //Services
     import RoutingService from "../lib/services/RoutingService.js";
     import Service from "../lib/services/Service";
-    import Input from "../lib/Input.svelte";
 
     //Tools
     import Condition from "../lib/tools/Condition";
+    import ComponentHelper from "../lib/tools/ComponentHelper";
+
+    import Input from "../lib/Input.svelte";
+    import Pagination from "../lib/models/Pagination";
     import Button from "../lib/Button.svelte";
 
     let allResult: Promise<[]>;
@@ -15,14 +18,13 @@
     let search = "";
     let oldSearch = "";
     let searchTimeout;
-    const MAX_RESULT = 5;
 
-    onMount(async () => {
+    onMount(() => {
         allResult = Service.GetAll();
-        await copyFirstFiveCountries();
+        result = ComponentHelper.copyFirstFive(allResult)
     });
 
-    beforeUpdate(async () => {
+    beforeUpdate(() => {
 
         if (search === oldSearch)
             return;
@@ -30,7 +32,7 @@
         if (Condition.isStringEmpty(search)) {
             search = "";
             oldSearch = "";
-            await copyFirstFiveCountries();
+            result = ComponentHelper.copyFirstFive(allResult)
             return;
         }
 
@@ -54,35 +56,18 @@
         }, 10);
     });
 
-    async function copyFirstFiveCountries(): Promise<void> {
-        const values = await allResult;
-        const firstFive = [];
-        for (let i = 0; i < MAX_RESULT; i++) {
-            firstFive[i] = values[i];
-        }
-        result = new Promise<[]>((resolve, reject) => resolve([...firstFive]));
-    }
-
     let start = 0;
 
     async function next(): Promise<void> {
-        start += MAX_RESULT;
-        const values = await allResult;
-        const firstFive = [];
-        for (let i = start; i < (start + MAX_RESULT); i++) {
-            firstFive[i - start] = values[i];
-        }
-        result = new Promise<[]>((resolve, reject) => resolve([...firstFive]));
+        const pagination = await ComponentHelper.nextResult(new Pagination(start, allResult));
+        start = pagination.start;
+        result = pagination.result;
     }
 
     async function previse(): Promise<void> {
-        start -= MAX_RESULT;
-        const values = await allResult;
-        const firstFive = [];
-        for (let i = start; i < (start + MAX_RESULT); i++) {
-            firstFive[i - start] = values[i];
-        }
-        result = new Promise<[]>((resolve, reject) => resolve([...firstFive]));
+        const pagination = await ComponentHelper.previseResult(new Pagination(start, allResult));
+        start = pagination.start;
+        result = pagination.result;
     }
 </script>
 
@@ -182,7 +167,7 @@
     }
 
     .col-1 {
-      flex-basis: 25%;
+      flex-basis: 30%;
     }
 
     .col-2 {
@@ -190,7 +175,7 @@
     }
 
     .col-3 {
-      flex-basis: 25%;
+      flex-basis: 30%;
     }
 
     @media all and (max-width: 767px) {

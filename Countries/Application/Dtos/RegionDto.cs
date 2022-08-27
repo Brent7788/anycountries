@@ -1,6 +1,4 @@
-﻿using Countries.Application.RestCountriesDtos;
-
-namespace Countries.Application.Dtos;
+﻿namespace Countries.Application.Dtos;
 
 public class RegionDto
 {

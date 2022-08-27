@@ -1,9 +1,9 @@
 ﻿using System.Text.Json;
 using Countries.Application.Dtos;
-using Countries.Application.RestCountriesDtos;
 
 namespace Countries.Infrastructure;
 
+//TODO refactore
 public class RestCountriesApi : IRestCountriesApi
 {
     private readonly HttpClient _client;
@@ -38,6 +38,21 @@ public class RestCountriesApi : IRestCountriesApi
         var countryDtos = JsonSerializer.Deserialize<List<CountryDto>>(readAsString, Options);
 
         if (countryDtos is null) return EmptyDtos;
+
+        foreach (var countryDto in countryDtos)
+        {
+            if (countryDto.Currencies is null || countryDto.Languages is null) continue;
+            
+            foreach (var countryDtoCurrency in countryDto.Currencies)
+            {
+                countryDto.OfficialCurrencies.Add(countryDtoCurrency.Value.Name);   
+            }
+
+            foreach (var countryDtoLanguage in countryDto.Languages)
+            {
+                countryDto.OfficialLanguages.Add(countryDtoLanguage.Value);
+            }
+        }
         
         foreach (var countryDto in countryDtos)
         {
@@ -57,6 +72,21 @@ public class RestCountriesApi : IRestCountriesApi
         var readAsString= await responseMessage.Content.ReadAsStringAsync();
 
         var countryDtos = JsonSerializer.Deserialize<List<CountryDto>>(readAsString, Options);
+        
+        if (countryDtos is null) return  new CountryDto();
+        
+        foreach (var countryDto in countryDtos)
+        {
+            foreach (var countryDtoCurrency in countryDto.Currencies)
+            {
+                countryDto.OfficialCurrencies.Add(countryDtoCurrency.Value.Name);   
+            }
+
+            foreach (var countryDtoLanguage in countryDto.Languages)
+            {
+                countryDto.OfficialLanguages.Add(countryDtoLanguage.Value);
+            }
+        }
         
         return countryDtos?.FirstOrDefault() ?? new CountryDto();
     }

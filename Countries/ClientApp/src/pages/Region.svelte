@@ -1,39 +1,144 @@
 <script lang="ts">
-    import {onMount} from "svelte";
+    import {beforeUpdate, onMount} from "svelte";
 
     //Services
     import RoutingService from "../lib/services/RoutingService.js";
     import Service from "../lib/services/Service";
+
+    //Tools
     import Condition from "../lib/tools/Condition";
+    import ComponentHelper from "../lib/tools/ComponentHelper";
 
-    let result: Promise<[]>;
+    import Pagination from "../lib/models/Pagination";
+    import Button from "../lib/Button.svelte";
+    import Input from "../lib/Input.svelte";
+    import Card from "../lib/Card.svelte";
 
-    onMount(() => {
+    let region: Promise<any>;
+    let allCountriesRegion: Promise<[]>;
+    let countryRegion: Promise<[]>;
+    let search = "";
+    let oldSearch = "";
+    let searchTimeout;
+    let countriesLength = 0;
+
+    onMount(async () => {
         const routingService = new RoutingService();
 
         if (Condition.isNothing(routingService.paramObject) || Condition.isNothing(routingService.paramObject.region))
             return;
 
-        let region = routingService.paramObject.region as string;
+        let regionName = routingService.paramObject.region as string;
 
-        console.log(region);
-        result = Service.GetCountriesByRegion(region);
+        region = Service.GetCountriesByRegion(regionName);
+
+        const result = await region;
+
+        allCountriesRegion = result.countries;
+
+        countriesLength = (await allCountriesRegion).length;
+        countryRegion = ComponentHelper.copyFirstFive(allCountriesRegion)
     });
+
+    beforeUpdate(() => {
+
+        if (search === oldSearch)
+            return;
+
+        if (Condition.isStringEmpty(search)) {
+            search = "";
+            oldSearch = "";
+            countryRegion = ComponentHelper.copyFirstFive(allCountriesRegion)
+            return;
+        }
+
+        if (searchTimeout)
+            clearTimeout(searchTimeout);
+
+        searchTimeout = setTimeout(async () => {
+            let values: any = await allCountriesRegion;
+
+            search = search.toLowerCase();
+
+            countryRegion = new Promise<[]>((resolve, reject) => {
+                const newResult = values.filter((v: any) =>
+                    Condition.stringContain(v.name?.common.toLowerCase(), search) ||
+                    Condition.stringContain(v.region?.toLowerCase(), search) ||
+                    Condition.stringContain(v.subregion?.toLowerCase(), search));
+                resolve(newResult);
+            });
+
+            oldSearch = search;
+        }, 10);
+    });
+
+    let start = 0;
+
+    async function next(): Promise<void> {
+        const pagination = await ComponentHelper.nextResult(new Pagination(start, allCountriesRegion));
+        start = pagination.start;
+        countryRegion = pagination.result;
+    }
+
+    async function previse(): Promise<void> {
+        const pagination = await ComponentHelper.previseResult(new Pagination(start, allCountriesRegion));
+        start = pagination.start;
+        countryRegion = pagination.result;
+    }
 </script>
 
-{#await result}
+<div class="header">
+    <div on:click={() => RoutingService.goto("/home")}>
+        <Button>Back</Button>
+    </div>
+    <h2>Region</h2>
+    <div on:click={() => RoutingService.goto("/home")}>
+        <Button>Home</Button>
+    </div>
+</div>
+{#await region}
     <p>Loading ...</p>
-{:then res}
-    {#if res}
-        <p>Region: {res.name}</p>
-        <p>Population: {res.population}</p>
+{:then reg}
+    {#if reg}
+        <Card style="background-color: #dadada; margin: 20px;">
+            <p>
+                Region: <strong>{reg.name}</strong>
+            </p>
+            <p>
+                Population: <strong>{reg.population}</strong>
+            </p>
+        </Card>
+    {:else}
+        <p>No Results</p>
+    {/if}
+{/await}
+
+<div class="header">
+    {#if Condition.isStringEmpty(search) && start !== 0}
+        <div on:click={previse}>
+            <Button>Previse</Button>
+        </div>
+    {:else}
+        <div></div>
+    {/if}
+    <Input bind:value={search} label="Search Country"></Input>
+    {#if Condition.isStringEmpty(search) && (start + 10)   < countriesLength}
+        <div on:click={next}>
+            <Button>Next</Button>
+        </div>
+    {/if}
+</div>
+{#await countryRegion}
+    <p>Loading ...</p>
+{:then countries}
+    {#if countries}
         <div class="container">
             <ul class="responsive-table">
                 <li class="table-header">
                     <div class="col col-1">Country</div>
                     <div class="col col-2">Subregion</div>
                 </li>
-                {#each res.countries as r}
+                {#each countries as r}
                     <li class="table-row">
                         <div class="col col-1" data-label="Country"
                              on:click={() => RoutingService.goto(`/country?name=${r.name.common}`)}>
@@ -53,6 +158,20 @@
 {/await}
 
 <style lang="scss">
+
+  h2 {
+    margin: 0;
+  }
+
+  p {
+    margin: 5px;
+  }
+
+  .header {
+    display: grid;
+    grid-template-columns: 20% 60% 20%;
+  }
+
   body {
     font-family: 'lato', sans-serif;
   }

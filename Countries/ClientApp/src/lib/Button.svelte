@@ -1,5 +1,5 @@
 
-<a href="#"><!-- link in here -->
+<a><!-- link in here -->
     <div class="button style"><slot></slot></div>
 </a>
 

@@ -1,4 +1,4 @@
-﻿namespace Countries.Application.RestCountriesDtos;
+﻿namespace Countries.Application.Dtos;
 
 public class CountryNameDto
 {

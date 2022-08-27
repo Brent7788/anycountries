@@ -1,5 +1,4 @@
 ﻿using Countries.Application.Dtos;
-using Countries.Application.RestCountriesDtos;
 using Countries.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 
