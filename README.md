@@ -7,7 +7,7 @@
 
 **Note: That you need Nodejs, npm, .NET 6 and Chrome install!**
 
-**Note: That sometimes the CSS does not load. Just re-run the app.**
+**Note: Sometimes the CSS does not load. Just re-run the app.**
 
 ## Troubleshooting
 
