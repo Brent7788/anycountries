@@ -1,4 +1,4 @@
-# Countries Explorer
+# Country Explorer
 
 ## Quick Start Guid
 
