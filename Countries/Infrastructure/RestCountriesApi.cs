@@ -1,9 +1,9 @@
 ﻿using System.Text.Json;
+using Countries.Application;
 using Countries.Application.Dtos;
 
 namespace Countries.Infrastructure;
 
-//TODO refactore
 public class RestCountriesApi : IRestCountriesApi
 {
     private readonly HttpClient _client;
@@ -20,13 +20,10 @@ public class RestCountriesApi : IRestCountriesApi
         _client = client;
     }
 
-    //TODO Use real cash
-    private static readonly List<CountryDto> Cash = new();
-
     public async Task<List<CountryDto>> GetAll()
     {
-        if (Cash.Any())
-            return Cash;
+        if (CachingLayer.AllCountriesSet())
+            return CachingLayer.GetAllCountries();
         
         var responseMessage = await _client.GetAsync("all");
 
@@ -39,25 +36,9 @@ public class RestCountriesApi : IRestCountriesApi
 
         if (countryDtos is null) return EmptyDtos;
 
-        foreach (var countryDto in countryDtos)
-        {
-            if (countryDto.Currencies is null || countryDto.Languages is null) continue;
-            
-            foreach (var countryDtoCurrency in countryDto.Currencies)
-            {
-                countryDto.OfficialCurrencies.Add(countryDtoCurrency.Value.Name);   
-            }
-
-            foreach (var countryDtoLanguage in countryDto.Languages)
-            {
-                countryDto.OfficialLanguages.Add(countryDtoLanguage.Value);
-            }
-        }
+        PopulateOfficialCurrenciesAndLanguages(countryDtos);
         
-        foreach (var countryDto in countryDtos)
-        {
-            Cash.Add(countryDto); 
-        }
+        CachingLayer.SetAllCountries(countryDtos);
 
         return countryDtos;
     }
@@ -74,9 +55,18 @@ public class RestCountriesApi : IRestCountriesApi
         var countryDtos = JsonSerializer.Deserialize<List<CountryDto>>(readAsString, Options);
         
         if (countryDtos is null) return  new CountryDto();
+
+        PopulateOfficialCurrenciesAndLanguages(countryDtos);
         
+        return countryDtos?.FirstOrDefault() ?? new CountryDto();
+    }
+    
+    private void PopulateOfficialCurrenciesAndLanguages(List<CountryDto> countryDtos)
+    {
         foreach (var countryDto in countryDtos)
         {
+            if (countryDto.Currencies is null || countryDto.Languages is null) continue;
+            
             foreach (var countryDtoCurrency in countryDto.Currencies)
             {
                 countryDto.OfficialCurrencies.Add(countryDtoCurrency.Value.Name);   
@@ -87,12 +77,13 @@ public class RestCountriesApi : IRestCountriesApi
                 countryDto.OfficialLanguages.Add(countryDtoLanguage.Value);
             }
         }
-        
-        return countryDtos?.FirstOrDefault() ?? new CountryDto();
     }
 
     public async Task<RegionDto> GetCountriesByRegion(string region)
     {
+        if (CachingLayer.AnyRegionByName(region))
+            return CachingLayer.GetRegionByName(region);
+        
         var regionDto = new RegionDto();
         
         var responseMessage = await _client.GetAsync($"region/{region}");
@@ -116,11 +107,16 @@ public class RestCountriesApi : IRestCountriesApi
         
         regionDto.Countries = countryDtos;
         
+        CachingLayer.SetRegion(regionDto);
+        
         return regionDto;
     }
 
     public async Task<SubRegionDto> GetCountriesBySubRegion(string subRegion)
     {
+        if (CachingLayer.AnySubregionByName(subRegion))
+            return CachingLayer.GetSubregionByName(subRegion);
+        
         var subRegionDto = new SubRegionDto();
         
         var responseMessage = await _client.GetAsync($"subregion/{subRegion}");
@@ -146,6 +142,8 @@ public class RestCountriesApi : IRestCountriesApi
         }
 
         subRegionDto.Countries = countryDtos;
+        
+        CachingLayer.SetSubregion(subRegionDto);
         
         return subRegionDto;
     }

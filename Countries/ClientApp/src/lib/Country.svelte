@@ -1,6 +1,5 @@
 <script lang="ts">
-
-    import {beforeUpdate, onMount} from "svelte";
+    import {beforeUpdate} from "svelte";
 
     //Services
     import Service from "../lib/services/Service";

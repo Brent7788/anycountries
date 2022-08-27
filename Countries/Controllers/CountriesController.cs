@@ -9,11 +9,12 @@ namespace Countries.Controllers;
 public class CountriesController : ControllerBase
 {
     private readonly IRestCountriesApi _restCountriesApi;
-    //TODO Log errors
+    private readonly ILogger<CountriesController> _logger;
 
-    public CountriesController(IRestCountriesApi restCountriesApi)
+    public CountriesController(IRestCountriesApi restCountriesApi, ILogger<CountriesController> logger)
     {
         _restCountriesApi = restCountriesApi;
+        _logger = logger;
     }
     
     [HttpGet]
@@ -25,6 +26,7 @@ public class CountriesController : ControllerBase
         }
         catch (Exception e)
         {
+            _logger.Log(LogLevel.Error, e.Message);
             return new BadRequestObjectResult("Oops! Something went wrong"); 
         }
     }
@@ -41,6 +43,7 @@ public class CountriesController : ControllerBase
         }
         catch (Exception e)
         {
+            _logger.Log(LogLevel.Error, e.Message);
             return new BadRequestObjectResult("Oops! Something went wrong"); 
         }
     }
@@ -57,6 +60,7 @@ public class CountriesController : ControllerBase
         }
         catch (Exception e)
         {
+            _logger.Log(LogLevel.Error, e.Message);
             return new BadRequestObjectResult("Oops! Something went wrong"); 
         }
     }
@@ -73,6 +77,7 @@ public class CountriesController : ControllerBase
         }
         catch (Exception e)
         {
+            _logger.Log(LogLevel.Error, e.Message);
             return new BadRequestObjectResult("Oops! Something went wrong"); 
         }
     }

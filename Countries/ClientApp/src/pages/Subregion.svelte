@@ -1,12 +1,12 @@
 <script lang="ts">
     import {onMount} from "svelte";
+    import {fly} from "svelte/transition";
 
     //Services
     import RoutingService from "../lib/services/RoutingService.js";
     import Service from "../lib/services/Service";
     import Condition from "../lib/tools/Condition";
     import Card from "../lib/Card.svelte";
-    import Country from "../lib/Country.svelte";
     import Button from "../lib/Button.svelte";
 
     let result: Promise<[]>;
@@ -52,8 +52,8 @@
                 <li class="table-header">
                     <div class="col col-1">Country</div>
                 </li>
-                {#each res.countries as r}
-                    <li class="table-row">
+                {#each res.countries as r, index}
+                    <li class="table-row" in:fly={{ x: 400, duration: 400, delay: 40 * index }}>
                         <div class="col col-1" data-label="Country"
                              on:click={() => RoutingService.goto(`/country?name=${r.name.common}`)}>
                             {r.name.common}

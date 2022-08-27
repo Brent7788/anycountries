@@ -1,5 +1,6 @@
 <script lang="ts">
     import {beforeUpdate, onMount} from "svelte";
+    import {fly} from "svelte/transition";
 
     //Services
     import RoutingService from "../lib/services/RoutingService.js";
@@ -138,8 +139,8 @@
                     <div class="col col-1">Country</div>
                     <div class="col col-2">Subregion</div>
                 </li>
-                {#each countries as r}
-                    <li class="table-row">
+                {#each countries as r, index}
+                    <li class="table-row" in:fly={{ x: 400, duration: 400, delay: 40 * index }}>
                         <div class="col col-1" data-label="Country"
                              on:click={() => RoutingService.goto(`/country?name=${r.name.common}`)}>
                             {r.name.common}
